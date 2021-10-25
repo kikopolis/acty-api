@@ -1,0 +1,48 @@
+version: "3"
+
+networks:
+    acty-api-test:
+
+services:
+    # nginx
+    nginx-acty-service:
+        image: nginx:stable-alpine
+        container_name: nginx-acty-container
+        ports:
+            - "80:80"
+        volumes:
+            - ./app:/var/www/project
+            - ./nginx/default.conf:/etc/nginx/conf.d/default.conf
+        depends_on:
+            - php-acty-service
+            - mariadb-acty-service
+        networks:
+            - acty-api-test
+    
+    # php
+    php-acty-service:
+        build:
+            context: .
+            dockerfile: ./php/Dockerfile
+        container_name: php-acty-container
+        volumes:
+            - ./app:/var/www/project
+        networks:
+            - acty-api-test
+    
+    # mariadb
+    mariadb-acty-service:
+        image: mariadb:10.5.9
+        container_name: mariadb-acty-container
+        #        ports:
+        #            - "3307:3306"
+        volumes:
+            - ./db-data/mariadb:/var/lib/mysql
+        networks:
+            - acty-api-test
+        restart: on-failure
+        environment:
+            MYSQL_DATABASE: acty-api
+            MYSQL_ROOT_PASSWORD: password
+            MYSQL_USER: root
+            MYSQL_PASSWORD: password
